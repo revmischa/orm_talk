@@ -2,15 +2,18 @@
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine, Column, Integer, Text, CheckConstraint, DateTime, func
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.schema import ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy import and_, or_
+
+DB_DSN = 'postgresql:///orm_demo'
 
 user1 = None
+user2 = None
 userpost1 = None
 
 # our database connection and engine
-engine = create_engine('postgresql:///orm_demo', echo=True)
+engine = create_engine(DB_DSN, echo=True)
 
 SessionFactory = sessionmaker()
 # bind session factory to our postgresql connection
@@ -54,21 +57,25 @@ class UserPost(DemoBase):
 
     id = Column(Integer, primary_key=True)
     created = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    user_id = Column(Integer, nullable=False)
-    body = Column(Text(), nullable=False)
+    body = Column(Text, nullable=False)
     user_id = Column(Integer, ForeignKey('person.id'), nullable=False)
     user = relationship('User', back_populates="posts")
+
+    def __repr__(self):
+        return f"<Blog post for user {self.user.email}, body={self.body}>"
 
 
 def create_db():
     """Create database from declarative schema."""
     print("creating")
+    DemoBase.metadata.drop_all(engine)
     DemoBase.metadata.create_all(engine)
-    create_test_data()
+    global session
+    create_test_data(session)
 
 
-def create_test_data():
-    global user1, userpost1
+def create_test_data(session):
+    global user1, userpost1, user2
     # construct user1
     user1 = User(
         name="Demo User 1",
@@ -87,10 +94,18 @@ def create_test_data():
     session.add(userpost1)
     session.commit()
 
+    # add some more test rows
+    user2 = User(name="Demo User 2", email="demouser2@test.com")
+    session.add(user2)
+    for i in range(5):
+        post = UserPost(user=user2, body="user2 post")
+        session.add(post)
+    session.commit()
+
 
 # entrypoint
 def main():
     create_db()
 
-# if __name__ == '__main__':
-main()
+if __name__ == '__main__':
+    main()

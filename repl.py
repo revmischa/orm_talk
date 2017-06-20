@@ -51,3 +51,5 @@ banner = """
 
 show_sql()
 from model import *
+main()
+
