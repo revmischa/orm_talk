@@ -62,6 +62,7 @@ class UserPost(DemoBase):
     user = relationship('User', back_populates="posts")
 
     def __repr__(self):
+        """Print pretty."""
         return f"<Blog post for user {self.user.email}, body={self.body}>"
 
 
@@ -95,11 +96,12 @@ def create_test_data(session):
     session.commit()
 
     # add some more test rows
-    user2 = User(name="Demo User 2", email="demouser2@test.com")
-    session.add(user2)
-    for i in range(5):
-        post = UserPost(user=user2, body="user2 post")
-        session.add(post)
+    for i in range(2, 9):
+        useri = User(name=f"Demo User {i}", email=f"demouser{i}@test.com")
+        session.add(useri)
+        for j in range(5):
+            post = UserPost(user=useri, body=f"user{i} post {j}")
+            session.add(post)
     session.commit()
 
 

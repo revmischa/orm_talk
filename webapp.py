@@ -6,6 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, Text, CheckConstraint, DateTime, func
 from sqlalchemy.schema import ForeignKey
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm import joinedload
 
 DB_DSN = 'postgresql:///orm_demo'
 
@@ -13,6 +14,11 @@ app = Flask("ORMDemo")
 app.config['SQLALCHEMY_DATABASE_URI'] = DB_DSN
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+
+# dump queries
+import logging
+logging.basicConfig()
+logging.getLogger('sqlalchemy.engine').setLevel(level=logging.INFO)
 
 
 # MODELS
@@ -52,8 +58,10 @@ def index():
 @app.route('/posts')
 def posts():
     ret = ""
-    for post in UserPost.query.all():
+    for post in UserPost.query.options(joinedload('user')).all():
         ret += f"User: {post.user.name}, post ID: {post.id}\n<br/>"
     return ret
+
+# .options(joinedload('user'))
 
 app.run(debug=True)
